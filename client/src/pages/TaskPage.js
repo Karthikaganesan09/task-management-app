@@ -1,17 +1,26 @@
-import React from "react";
+import React, { useEffect, useState } from "react";
+import { getTasks } from "../services/taskService";
 
 function TaskPage() {
+  const [tasks, setTasks] = useState([]);
+
+  useEffect(() => {
+    getTasks()
+      .then((res) => setTasks(res.data))
+      .catch(() => alert("Unauthorized"));
+  }, []);
+
   return (
     <div className="container mt-4">
       <h3>Your Tasks</h3>
 
-      <div className="card mt-3">
-        <div className="card-body">
-          <h5 className="card-title">Sample Task</h5>
-          <p className="card-text">Demo task description</p>
-          <span className="badge bg-warning text-dark">Pending</span>
+      {tasks.map((task) => (
+        <div key={task._id} className="card p-3 mb-2">
+          <h5>{task.title}</h5>
+          <p>{task.description}</p>
+          <span className="badge bg-warning">{task.status}</span>
         </div>
-      </div>
+      ))}
     </div>
   );
 }

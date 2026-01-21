@@ -1,13 +1,16 @@
-import "bootstrap/dist/css/bootstrap.min.css";
-import Navbar from "./components/Navbar";
+import { BrowserRouter, Routes, Route } from "react-router-dom";
+import LoginPage from "./pages/LoginPage";
 import TaskPage from "./pages/TaskPage";
+import "bootstrap/dist/css/bootstrap.min.css";
 
 function App() {
   return (
-    <>
-      <Navbar />
-      <TaskPage />
-    </>
+    <BrowserRouter>
+      <Routes>
+        <Route path="/" element={<LoginPage />} />
+        <Route path="/tasks" element={<TaskPage />} />
+      </Routes>
+    </BrowserRouter>
   );
 }
 
