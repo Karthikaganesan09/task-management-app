@@ -1,42 +1,41 @@
 const express = require("express");
 const Task = require("../models/Task");
-
-const router = express.Router();
 const authMiddleware = require("../middleware/authMiddleware");
 
+const router = express.Router();
 
 /**
- * CREATE TASK - POST /api/tasks
+ * CREATE TASK
+ * POST /api/tasks
  */
 router.post("/", authMiddleware, async (req, res) => {
-
   try {
-    const { title, description, status, dueDate } = req.body;
+    const { title, description, status } = req.body;
 
     if (!title) {
       return res.status(400).json({ message: "Title is required" });
     }
 
-    const task = new Task({
+    const task = await Task.create({
       title,
       description,
-      status,
-      dueDate,
+      status: status || "Pending",
+      user: req.user.id, // 🔥 REQUIRED
     });
 
-    const savedTask = await task.save();
-    res.status(201).json(savedTask);
+    res.status(201).json(task);
   } catch (error) {
     res.status(500).json({ message: error.message });
   }
 });
 
 /**
- * GET ALL TASKS - GET /api/tasks
+ * GET USER TASKS
+ * GET /api/tasks
  */
-router.get("/", async (req, res) => {
+router.get("/", authMiddleware, async (req, res) => {
   try {
-    const tasks = await Task.find();
+    const tasks = await Task.find({ user: req.user.id }).sort({ createdAt: -1 });
     res.status(200).json(tasks);
   } catch (error) {
     res.status(500).json({ message: error.message });
@@ -44,40 +43,33 @@ router.get("/", async (req, res) => {
 });
 
 /**
- * UPDATE TASK - PUT /api/tasks/:id
+ * UPDATE TASK
  */
- router.put("/:id", authMiddleware, async (req, res) => {
-
+router.put("/:id", authMiddleware, async (req, res) => {
   try {
-    const updatedTask = await Task.findByIdAndUpdate(
-      req.params.id,
+    const updatedTask = await Task.findOneAndUpdate(
+      { _id: req.params.id, user: req.user.id },
       req.body,
-      { new: true, runValidators: true }
+      { new: true }
     );
 
-    if (!updatedTask) {
-      return res.status(404).json({ message: "Task not found" });
-    }
-
-    res.status(200).json(updatedTask);
+    res.json(updatedTask);
   } catch (error) {
     res.status(500).json({ message: error.message });
   }
 });
 
 /**
- * DELETE TASK - DELETE /api/tasks/:id
+ * DELETE TASK
  */
 router.delete("/:id", authMiddleware, async (req, res) => {
-
   try {
-    const deletedTask = await Task.findByIdAndDelete(req.params.id);
+    await Task.findOneAndDelete({
+      _id: req.params.id,
+      user: req.user.id,
+    });
 
-    if (!deletedTask) {
-      return res.status(404).json({ message: "Task not found" });
-    }
-
-    res.status(200).json({ message: "Task deleted successfully" });
+    res.json({ message: "Task deleted" });
   } catch (error) {
     res.status(500).json({ message: error.message });
   }
